@@ -1,0 +1,22 @@
+--- a/vendor/magento/module-quote/Model/ResourceModel/Quote.php
++++ b/vendor/magento/module-quote/Model/ResourceModel/Quote.php
+@@ -220,13 +220,18 @@
+         $connection = $this->getConnection();
+         $subSelect = $connection->select();
+ 
++        // FIX force the new value for items_count to be > 0 and respect the column attribute UNSIGNED
++        $conditionCheck = $connection->quoteIdentifier('q.items_count') . " > 0";
++        $conditionTrue = $connection->quoteIdentifier('q.items_count') . ' - 1';
++        $ifSql = "IF (" . $conditionCheck . "," . $conditionTrue . ", 0)";
++
+         $subSelect->from(
+             false,
+             [
+                 'items_qty' => new \Zend_Db_Expr(
+                     $connection->quoteIdentifier('q.items_qty') . ' - ' . $connection->quoteIdentifier('qi.qty')
+                 ),
+-                'items_count' => new \Zend_Db_Expr($connection->quoteIdentifier('q.items_count') . ' - 1')
++                'items_count' => new \Zend_Db_Expr($ifSql)
+             ]
+         )->join(
+             ['qi' => $this->getTable('quote_item')],
